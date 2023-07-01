@@ -1,9 +1,17 @@
 /* eslint-disable no-extra-boolean-cast */
 import { useCallback, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
+
+// subscription
+const GET_TODOS_SUBSCRIPTION = gql`
+  subscription GET_TODOS_SUBSCRIPTION {
+    todos {
+      id
+      title
+    }
+  }
+`;
 
 // get todos
 const GET_TODOS_QUERY = gql`
@@ -43,24 +51,19 @@ const UPDATE_TODO_BY_ID_MUTATION = gql`
 `;
 
 function App() {
-  const { loading, data } = useQuery(GET_TODOS_QUERY);
-  const [addTodo, { loading: addTodoLoading }] = useMutation(
-    ADD_TODO_MUTATION,
-    {
-      refetchQueries: [GET_TODOS_QUERY],
-    }
-  );
+  // use subscription
+  const { loading, data } = useSubscription(GET_TODOS_SUBSCRIPTION);
+  // use query
+  // const { loading, data } = useQuery(GET_TODOS_QUERY);
+  // use mutation add todo
+  const [addTodo, { loading: addTodoLoading }] = useMutation(ADD_TODO_MUTATION);
+  // use mutation delete todo
   const [deleteTodoById, { loading: deleteTodoByIdLoading }] = useMutation(
-    DELETE_TODO_BY_ID_MUTATION,
-    {
-      refetchQueries: [GET_TODOS_QUERY],
-    }
+    DELETE_TODO_BY_ID_MUTATION
   );
+  // use mutation update todo
   const [updateTodoById, { loading: updateTodoByIdLoading }] = useMutation(
-    UPDATE_TODO_BY_ID_MUTATION,
-    {
-      refetchQueries: [GET_TODOS_QUERY],
-    }
+    UPDATE_TODO_BY_ID_MUTATION
   );
   const [title, setTitle] = useState("");
   const [todoId, setTodoId] = useState("");
