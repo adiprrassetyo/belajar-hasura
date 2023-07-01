@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 import { useCallback, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
@@ -43,14 +44,26 @@ const UPDATE_TODO_BY_ID_MUTATION = gql`
 
 function App() {
   const { loading, data } = useQuery(GET_TODOS_QUERY);
-  const [addTodo, { loading: addTodoLoading }] = useMutation(ADD_TODO_MUTATION);
+  const [addTodo, { loading: addTodoLoading }] = useMutation(
+    ADD_TODO_MUTATION,
+    {
+      refetchQueries: [GET_TODOS_QUERY],
+    }
+  );
   const [deleteTodoById, { loading: deleteTodoByIdLoading }] = useMutation(
-    DELETE_TODO_BY_ID_MUTATION
+    DELETE_TODO_BY_ID_MUTATION,
+    {
+      refetchQueries: [GET_TODOS_QUERY],
+    }
   );
   const [updateTodoById, { loading: updateTodoByIdLoading }] = useMutation(
-    UPDATE_TODO_BY_ID_MUTATION
+    UPDATE_TODO_BY_ID_MUTATION,
+    {
+      refetchQueries: [GET_TODOS_QUERY],
+    }
   );
   const [title, setTitle] = useState("");
+  const [todoId, setTodoId] = useState("");
 
   // handle add todo callback
   const handleAddTodo = useCallback(() => {
@@ -58,23 +71,21 @@ function App() {
       variables: {
         title,
       },
-      refetchQueries: [{ query: GET_TODOS_QUERY }],
     });
+    setTitle("");
   }, [addTodo, title]);
 
   // handle update todo callback
-  const handleUpdateTodo = useCallback(
-    (id: string, title: string) => {
-      updateTodoById({
-        variables: {
-          id,
-          title,
-        },
-        refetchQueries: [{ query: GET_TODOS_QUERY }],
-      });
-    },
-    [updateTodoById]
-  );
+  const handleUpdateTodo = useCallback(() => {
+    updateTodoById({
+      variables: {
+        id: todoId,
+        title,
+      },
+    });
+    setTodoId("");
+    setTitle("");
+  }, [todoId, title]);
 
   return (
     <>
@@ -92,11 +103,23 @@ function App() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Add todo"
         />
-        <button onClick={handleAddTodo}>Add Todo</button>
+        {!!todoId ? (
+          <button onClick={handleUpdateTodo}>Update Todo</button>
+        ) : (
+          <button onClick={handleAddTodo}>Add Todo</button>
+        )}
 
-        {data?.todos.map((todo: { title: string; id: number }) => (
+        {data?.todos.map((todo: { title: string; id: string }) => (
           <div key={todo.id}>
             <p>{todo.title}</p>
+            <button
+              onClick={() => {
+                setTodoId(todo.id);
+                setTitle(todo.title);
+              }}
+            >
+              Edit
+            </button>
             <button
               onClick={() =>
                 deleteTodoById({
